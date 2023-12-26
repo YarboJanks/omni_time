@@ -1,0 +1,795 @@
+###################################################################
+#                                                                 #
+#               Auto Omni v3.0 by [-_-]mindCrank                  #
+#                                                                 #
+# What it does:                                                   #
+#   - Auto Targets and prioritizes adds/boss in order of priority #
+#   - Keeps you alive, with pots, bandages, chiv, vet etc         #
+#   - Manages Chiv Symbols, potion buffs and food buffs           #
+#                                                                 #
+###################################################################
+
+# To-do list:
+# 1. Verify FIFO target prioritization - COMPLETE
+# 2. Add Build Detection - COMPLETE
+# 3. Add attack routine for different builds - COMPLETE
+# 4. Add barding - COMPLETE
+# 4.1 Bard priorities... aoe disco when adds spawn, maintain discord and bard break through peace on boss, maintain bard buffs - COMPLETE
+
+@clearall
+
+if skill 'chivalry' > 1
+    if not gumpexists 1387930325
+        say '[ChivalryHotBar'
+    endif
+endif
+if skill 'tactics' >= 80
+    if not gumpexists 1066647553
+        say '[CodexHotBar'
+    endif
+endif
+
+@setvar! minimumWaitForPing 200
+@setvar! maximumWaitForPing 650
+@setvar! HealPotCD 7000
+@setvar! NobleSacrificeCD 30000
+@setvar! DivineFuryCD 30000
+@setvar! HolyLightCD 30000
+@setvar! PreventChivAbilitySpamCD 750
+@setvar! HerdTimerCD 5500
+@setvar! AllKillTimerCD 5000
+@setvar! preventVetSpamCD 5000
+@setvar! GlobalSongTimerCD 10000
+@setvar! DiscordTimerCD 5000
+@setvar! PeaceTimerCD 10000
+@setvar! currentTarget 0
+@setvar! archer 0
+@setvar! melee 0
+@setvar! mage 0
+@setvar! tamer 0
+@setvar! bard 0
+@setvar! discord 0
+@setvar! peace 0
+@setvar! provo 0
+
+if not timerexists preventVetSpam
+    createtimer preventVetSpam
+    settimer preventVetSpam preventVetSpamCD
+endif
+if not timerexists HealPotTimer
+    createtimer HealPotTimer
+    settimer HealPotTimer HealPotCD
+endif
+if not timerexists NobleSacrificeTimer
+    createtimer NobleSacrificeTimer
+    settimer NobleSacrificeTimer NobleSacrificeCD
+endif
+if not timerexists DivineFuryTimer
+    createtimer DivineFuryTimer
+    settimer DivineFuryTimer DivineFuryCD
+endif
+if not timerexists HolyLightTimer
+    createtimer HolyLightTimer
+    settimer HolyLightTimer HolyLightCD
+endif
+if not timerexists PreventChivAbilitySpamTimer
+    createtimer PreventChivAbilitySpamTimer
+    settimer PreventChivAbilitySpamTimer PreventChivAbilitySpamCD
+endif
+if not timerexists HerdTimer
+    createtimer HerdTimer
+    settimer HerdTimer HerdTimerCD
+endif
+if not timerexists AllKillTimer
+    createtimer AllKillTimer
+    settimer AllKillTimer AllKillTimerCD
+endif
+if not timerexists GlobalSongTimer
+    createtimer GlobalSongTimer
+    settimer GlobalSongTimer GlobalSongTimerCD
+endif
+if not timerexists DiscordTimer
+    createtimer DiscordTimer
+    settimer DiscordTimer DiscordTimerCD
+endif
+if not timerexists PeaceTimer
+    createtimer PeaceTimer
+    settimer PeaceTimer PeaceTimerCD
+endif
+
+if skill 'archery' > 1
+    @setvar! archer 1
+endif
+if skill 'magery' > 1
+    @setvar! mage 1
+endif
+if skill 'fencing' > 1 or skill 'mace fighting' > 1 or skill 'swordsmanship' > 1 or skill 'wrestling' > 1 and skill 'magery' < 1 and skill 'animal taming' < 1
+    @setvar! melee 1
+endif
+if skill 'musicianship' > 1
+    @setvar! bard 1
+    if skill 'discordance' > 1
+        @setvar! discord 1
+    endif
+    if skill 'peacemaking' > 1
+        @setvar! peace 1
+    endif
+    if skill 'provocation' > 1
+        @setvar! provo 1
+    endif
+endif
+if skill 'animal taming' > 1 and skill 'animal lore' > 1
+    @setvar! tamer 1
+    if skill 'herding' > 1
+        @setvar! herder 1
+    endif
+endif
+
+overhead '[Starting...] Auto Omni Add Sniper v3.0 by [-_-] mindCrank.' 184
+wait 1000
+if melee = 1 and tamer = 1
+    overhead '[Class Detected]: Melee Tamer' 169
+elseif melee = 1 and tamer = 0 and bard = 0
+    overhead '[Class Detected]: Pure Melee' 169
+elseif melee = 1 and tamer = 0 and bard = 1
+    overhead '[Class Detected]: Melee Bard' 169
+elseif arhcer = 1 and tamer = 1
+    overhead '[Class Detected]: Archer Tamer' 169
+elseif archer = 1 and tamer = 0 and bard = 1
+    overhead '[Class Detected]: Archer Bard' 169
+elseif archer = 1 and tamer = 0 and bard = 0
+    overhead '[Class Detected]: Pure Archer' 169
+elseif mage = 1 and tamer = 1
+    overhead '[Class Detected]: Mage Tamer' 169
+elseif mage = 1 and tamer = 0 and bard = 1
+    overhead '[Class Detected]: Mage Bard' 169
+elseif mage = 1 and tamer = 0 and bard = 0
+    overhead '[Class Detected]: Pure Mage' 169
+elseif tamer = 1 and bard = 1
+    overhead '[Class Detected]: Bard Tamer' 169
+endif
+
+if melee = 1
+    if skill 'chivalry' > 1
+        wait 500
+        overhead '[Chivalry Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Chivalry Check]: Disabled' 38
+    endif
+endif
+if tamer = 1
+    if skill 'herding' > 1
+        wait 500
+        overhead '[Herding Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Herding Check]: Disabled' 38
+    endif
+endif
+if tamer = 1
+    if skill 'veterinary' > 1
+        wait 500
+        overhead '[Veterinary Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Veterinary Check]: Disabled' 38
+    endif
+endif
+if bard = 1
+    if skill 'discordance' > 1
+        wait 500
+        overhead '[Discordance Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Discordance Check]: Disabled' 38
+    endif
+    if skill 'peacemaking' > 1
+        wait 500
+        overhead '[Peacemaking Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Peacemaking Check]: Disabled' 38
+    endif
+    if skill 'provocation' > 1
+        wait 500
+        overhead '[Provocation Check]: Enabled' 169
+    else
+        wait 500
+        overhead '[Provocation Check]: Disabled' 38
+    endif
+endif
+if skill 'alchemy' > 1
+    wait 500
+    overhead '[Alchemy Check]: Enabled' 169
+else
+    wait 500
+    overhead '[Alchemy Check]: Disabled' 38
+endif
+
+while not dead
+
+    if melee = 1 and tamer = 0
+        if findtype 'a rift daemon' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    skill 'discordance'
+                endwhile
+                while targetexists
+                    target self
+                endwhile
+                settimer DiscordTimer 0
+                settimer GlobalSongTimer 0
+            endif
+        elseif findtype 'a lesser rift daemon' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    skill 'discordance'
+                endwhile
+                while targetexists
+                    target self
+                endwhile
+                settimer DiscordTimer 0
+                settimer GlobalSongTimer 0
+            endif
+        elseif findtype 'an astral projection' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+        elseif findtype 'a rift cultist' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+        elseif findtype 'a rift warrior' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+        elseif findtype 'a rift footman' ground any any 1 as myTarget
+            attack myTarget
+            wait 50
+        else
+            hotkey 'target closest non-friendly monster'
+            attack lasttarget
+            wait 50
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                getlabel lasttarget myLabel
+                if 'discord' in myLabel
+                    //do nothing
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        skill 'discordance'
+                    endwhile
+                    while targetexists
+                        target lasttarget
+                    endwhile
+                    settimer DiscordTimer 0
+                    settimer GlobalSongTimer 0
+                endif
+            endif
+            if peace = 1 and timer DiscordTimer >= DiscordTimerCD
+                getlabel lasttarget myLabel
+                if 'break' in myLabel
+                    //do nothing
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        skill 'peacemaking'
+                    endwhile
+                    while targetexists
+                        target lasttarget
+                    endwhile
+                    settimer PeaceTimer 0
+                    settimer GlobalSongTimer 0
+                endif
+            endif
+        endif
+    else
+        if findtype 'a rift daemon' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    skill 'discordance'
+                endwhile
+                while targetexists
+                    target self
+                endwhile
+                settimer DiscordTimer 0
+                settimer GlobalSongTimer 0
+            endif
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a lesser rift daemon' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    skill 'discordance'
+                endwhile
+                while targetexists
+                    target self
+                endwhile
+                settimer DiscordTimer 0
+                settimer GlobalSongTimer 0
+            endif
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'an astral projection' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a rift cultist' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a rift warrior' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a rift footman' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        else
+            hotkey 'target closest non-friendly monster'
+            @setvar! currentTarget lasttarget
+            getlabel currentTarget myLabel
+            if find currentTarget
+                attack lasttarget
+                wait 50
+                if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+                    if 'discord' in myLabel
+                        // do nothing
+                    else
+                        while targetexists
+                            hotkey 'cancel current target'
+                        endwhile
+                        while not targetexists
+                            skill 'discordance'
+                        endwhile
+                        while targetexists
+                            target lasttarget
+                        endwhile
+                        settimer DiscordTimer 0
+                        settimer GlobalSongTimer 0
+                    endif
+                endif
+                if peace = 1 and timer PeaceTimer >= PeaceTimerCD and timer DiscordTimer >= DiscordTimerCD
+                    getlabel currentTarget myLabel
+                    if 'break' in myLabel
+                        // do nothing
+                    else
+                        while targetexists
+                            hotkey 'cancel current target'
+                        endwhile
+                        while not targetexists
+                            skill 'peacemaking'
+                        endwhile
+                        while targetexists
+                            target lasttarget
+                        endwhile
+                        settimer PeaceTimer 0
+                        settimer GlobalSongTimer 0
+                    endif
+                endif
+                if tamer = 1
+                    if herder = 1 and timer HerdTimer >= HerdTimerCD
+                        while targetexists
+                            hotkey 'cancel current target'
+                        endwhile
+                        while not targetexists
+                            say '[focusaggression'
+                        endwhile
+                        while targetexists
+                            target lasttarget
+                        endwhile
+                        settimer HerdTimer 0
+                    else
+                        if timer AllKillTimer >= AllKillTimerCD
+                            while targetexists
+                                hotkey 'cancel current target'
+                            endwhile
+                            while not targetexists
+                                say 'all kill' 
+                            endwhile
+                            while targetexists
+                                target lasttarget
+                            endwhile
+                            settimer AllKillTimer 0
+                        endif
+                    endif
+                endif
+            else
+            endif
+        endif
+    endif
+    
+    if bard = 1
+        if not findbuff 'song of discordance' and skill discordance >= 80 and timer GlobalSongTimer >= GlobalSongTimerCD
+            overhead 'Discord Buff Missing!' 23
+            while targetexists
+                hotkey 'cancel current target'
+            endwhile
+            while not targetexists
+                skill 'discordance'
+            endwhile
+            while targetexists
+                target backpack
+            endwhile
+            settimer GlobalSongTimer 0
+            wait 500
+        endif
+        if not findbuff 'song of peacemaking' and skill peacemaking >= 80 and timer GlobalSongTimer >= GlobalSongTimerCD
+            overhead 'Peace Buff Missing!' 23
+            while targetexists
+                hotkey 'cancel current target'
+            endwhile
+            while not targetexists
+                skill 'peacemaking'
+            endwhile
+            while targetexists
+                target backpack
+            endwhile
+            settimer GlobalSongTimer 0
+            wait 500
+        endif
+        if not findbuff 'song of provocation' and skill provocation >= 80 and timer GlobalSongTimer >= GlobalSongTimerCD
+            overhead 'Provo Buff Missing!' 23
+            while targetexists
+                hotkey 'cancel current target'
+            endwhile
+            while not targetexists
+                skill 'provocation'
+            endwhile
+            while targetexists
+                target backpack
+            endwhile
+            settimer GlobalSongTimer 0
+            wait 500
+        endif
+    endif
+
+    if skill 'veterinary' > 1 and findtype '25750' backpack 
+        if hp < maxhp or poisoned and not bandaging
+            dclicktype "clean bandage%s%"
+            wait 600
+            say '[veterinarysupplies'
+            wait 300
+            target self
+            wait minimumWaitForPing
+            if insysmsg 'You or your nearby followers do not require healing.'
+                hotkey 'Clear Target Queue'
+                settimer preventVetSpam 0
+            endif
+        endif
+        if not bandaging and timer preventVetSpam >= preventVetSpamCD
+            say '[veterinarysupplies'
+            wait minimumWaitForPing
+            settimer preventVetSpam 0
+            if insysmsg 'You or your nearby followers do not require healing.'
+                hotkey 'Clear Target Queue'
+                settimer preventVetSpam 0
+            endif
+        endif
+    endif
+    if skill 'healing' > 1
+        if not bandaging and hp < maxhp
+            hotkey 'bandage self'
+        endif
+    endif
+
+    if skill 'chivalry' > 1
+        if ingump "12/" 1387930325
+            @setvar! symbols_available 12
+        elseif ingump "11/" 1387930325
+            @setvar! symbols_available 11
+        elseif ingump "10/" 1387930325
+            @setvar! symbols_available 10
+        elseif ingump "9/" 1387930325
+            @setvar! symbols_available 9
+        elseif ingump "8/" 1387930325
+            @setvar! symbols_available 8
+        elseif ingump "7/" 1387930325
+            @setvar! symbols_available 7
+        elseif ingump "6/" 1387930325
+            @setvar! symbols_available 6
+        elseif ingump "5/" 1387930325
+            @setvar! symbols_available 5
+        elseif ingump "4/" 1387930325
+            @setvar! symbols_available 4
+        elseif ingump "3/" 1387930325
+            @setvar! symbols_available 3
+        elseif ingump "2/" 1387930325
+            @setvar! symbols_available 2
+        elseif ingump "1/" 1387930325
+            @setvar! symbols_available 1
+        elseif ingump "0/" 1387930325
+            @setvar! symbols_available 0
+        endif
+
+        if symbols_available >= 4 and DivineFuryTimer >= DivineFuryCD
+            yell '[DivineFury'
+            wait maximumWaitForPing
+            if insysmsg 'Holy symbols remaining'
+                settimer DivineFuryTimer 0
+                cooldown 'Divine Fury' 29500
+            endif
+        endif
+
+        if ingump "12/" 1387930325
+            @setvar! symbols_available 12
+        elseif ingump "11/" 1387930325
+            @setvar! symbols_available 11
+        elseif ingump "10/" 1387930325
+            @setvar! symbols_available 10
+        elseif ingump "9/" 1387930325
+            @setvar! symbols_available 9
+        elseif ingump "8/" 1387930325
+            @setvar! symbols_available 8
+        elseif ingump "7/" 1387930325
+            @setvar! symbols_available 7
+        elseif ingump "6/" 1387930325
+            @setvar! symbols_available 6
+        elseif ingump "5/" 1387930325
+            @setvar! symbols_available 5
+        elseif ingump "4/" 1387930325
+            @setvar! symbols_available 4
+        elseif ingump "3/" 1387930325
+            @setvar! symbols_available 3
+        elseif ingump "2/" 1387930325
+            @setvar! symbols_available 2
+        elseif ingump "1/" 1387930325
+            @setvar! symbols_available 1
+        elseif ingump "0/" 1387930325
+            @setvar! symbols_available 0
+        endif
+        if hp < 50 and 'symbols_available' >= 5 and timer HolyLightTimer >= HolyLightCD
+            if targetexists 
+                hotkey 'cancel current target'
+            endif
+            say '[HolyLight'
+            wait maximumWaitForPing
+            if insysmsg 'Holy symbols remaining'
+                settimer HolyLightTimer 0
+                cooldown 'Holy Light' 29500
+            endif
+        endif
+
+        if ingump "12/" 1387930325
+            @setvar! symbols_available 12
+        elseif ingump "11/" 1387930325
+            @setvar! symbols_available 11
+        elseif ingump "10/" 1387930325
+            @setvar! symbols_available 10
+        elseif ingump "9/" 1387930325
+            @setvar! symbols_available 9
+        elseif ingump "8/" 1387930325
+            @setvar! symbols_available 8
+        elseif ingump "7/" 1387930325
+            @setvar! symbols_available 7
+        elseif ingump "6/" 1387930325
+            @setvar! symbols_available 6
+        elseif ingump "5/" 1387930325
+            @setvar! symbols_available 5
+        elseif ingump "4/" 1387930325
+            @setvar! symbols_available 4
+        elseif ingump "3/" 1387930325
+            @setvar! symbols_available 3
+        elseif ingump "2/" 1387930325
+            @setvar! symbols_available 2
+        elseif ingump "1/" 1387930325
+            @setvar! symbols_available 1
+        elseif ingump "0/" 1387930325
+            @setvar! symbols_available 0
+        endif
+        if hp < 35 and symbols_available >= 4 and timer NobleSacrificeTimer >= NobleSacrificeCD
+            if targetexists 
+                hotkey 'cancel current target'
+            endif
+            while not targetexists 'beneficial'
+                say '[NobleSacrifice'
+            endwhile
+            while targetexists 'beneficial'
+                target self
+            endwhile
+            wait maximumWaitForPing
+            if insysmsg 'Holy symbols remaining'
+                settimer NobleSacrificeTimer 0
+                cooldown 'N.Sacrifice' 29500
+            endif
+        endif
+    endif
+
+    while stam < maxstam and findtype '2546' backpack 1848
+        if findtype '2546' backpack 1848 as myRibs
+            dclick myRibs
+            wait maximumWaitForPing
+        endif
+    endwhile
+    if findtype '3852' backpack and timer HealPotTimer >= HealPotCD
+        if hp < 40
+            hotkey 'drink heal'
+            wait maximumWaitForPing
+            if not insysmsg 'you are at max health' or not insysmsg 'cooldown message'
+                settimer HealPotTimer 0
+                cooldown 'Heal Pot' 9750
+            endif
+            wait minimumWaitForPing
+        endif
+    endif
+    if skill 'alchemy' > 1
+        if not findbuff 'Strength'
+            if findtype "White Potion" backpack
+                hotkey 'drink strength'
+            endif
+            wait maximumWaitForPing
+        endif
+        if not findbuff 'Agility'
+            if findtype "Blue Potion" backpack
+                hotkey 'drink agility'
+            endif
+            wait maximumWaitForPing
+        endif
+        if not findbuff 'Magic Resist Potion'
+            if findtype "3846" backpack
+                hotkey 'drink magic resist'
+            endif
+            wait maximumWaitForPing
+        endif
+    endif
+    if not findbuff 'food satisfaction'
+        if findtype tray backpack
+            dclicktype tray backpack
+            wait maximumWaitForPing
+        endif
+    endif
+
+endwhile
