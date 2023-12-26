@@ -10,11 +10,8 @@
 ###################################################################
 
 # To-do list:
-# 1. Verify FIFO target prioritization - COMPLETE
-# 2. Add Build Detection - COMPLETE
-# 3. Add attack routine for different builds - COMPLETE
-# 4. Add barding - COMPLETE
-# 4.1 Bard priorities... aoe disco when adds spawn, maintain discord and bard break through peace on boss, maintain bard buffs - COMPLETE
+# - Add mage spell rotation
+# - Add Magery self buff and healing with scribe detection
 
 @clearall
 
