@@ -1,6 +1,6 @@
 ###################################################################
 #                                                                 #
-#               Auto Omni v3.0 by [-_-]mindCrank                  #
+#               Auto Omni v3.1 by [-_-]mindCrank                  #
 #                                                                 #
 # What it does:                                                   #
 #   - Auto Targets and prioritizes adds/boss in order of priority #
@@ -619,7 +619,10 @@ while not dead
     endif
     if skill 'healing' > 1
         if not bandaging and hp < maxhp
-            hotkey 'bandage self'
+            while targetexists
+                @hotkey 'clear current target'
+            endwhile
+            @hotkey 'bandage self'
         endif
     endif
 
