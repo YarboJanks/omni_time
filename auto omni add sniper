@@ -622,7 +622,12 @@ while not dead
             while targetexists
                 @hotkey 'clear current target'
             endwhile
-            @hotkey 'bandage self'
+            while not targetexists
+                dclicktype '3617' self
+            endwhile
+            while targetexists
+                target self
+            endwhile
         endif
     endif
 
