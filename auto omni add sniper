@@ -1,6 +1,6 @@
 ###################################################################
 #                                                                 #
-#               Auto Omni v3.1 by [-_-]mindCrank                  #
+#               Auto Omni v3.2 by [-_-]mindCrank                  #
 #                                                                 #
 # What it does:                                                   #
 #   - Auto Targets and prioritizes adds/boss in order of priority #
@@ -12,6 +12,7 @@
 # To-do list:
 # - Add mage spell rotation
 # - Add Magery self buff and healing with scribe detection
+# - Account for Herding Necro and maintaining summons
 
 @clearall
 
@@ -119,6 +120,17 @@ if skill 'animal taming' > 1 and skill 'animal lore' > 1
     @setvar! tamer 1
     if skill 'herding' > 1
         @setvar! herder 1
+        if findtype "shepherd's crook" backpack as crooky
+            getlabel crooky desc
+                if 'activated' in desc
+                    overhead '[Herding]: Active' 88
+                    overhead desc
+                else
+                    dclick crooky
+                endif
+            else
+                overhead 'Need a crooky'
+        endif
     endif
 endif
 
@@ -309,28 +321,17 @@ while not dead
                 settimer DiscordTimer 0
                 settimer GlobalSongTimer 0
             endif
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         elseif findtype 'a lesser rift daemon' ground any any 12 as myTarget
             attack myTarget
@@ -348,132 +349,77 @@ while not dead
                 settimer DiscordTimer 0
                 settimer GlobalSongTimer 0
             endif
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         elseif findtype 'an astral projection' ground any any 12 as myTarget
             attack myTarget
             wait 50
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         elseif findtype 'a rift cultist' ground any any 12 as myTarget
             attack myTarget
             wait 50
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         elseif findtype 'a rift warrior' ground any any 12 as myTarget
             attack myTarget
             wait 50
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         elseif findtype 'a rift footman' ground any any 12 as myTarget
             attack myTarget
             wait 50
-            if tamer = 1
-                if herder = 1 and timer HerdTimer >= HerdTimerCD
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say '[focusaggression'
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                else
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    while not targetexists
-                        say 'all kill' 
-                    endwhile
-                    while targetexists
-                        target myTarget
-                    endwhile
-                endif
+            if timer AllKillTimer >= AllKillTimerCD
+                while targetexists
+                    hotkey 'cancel current target'
+                endwhile
+                while not targetexists
+                    say 'all kill' 
+                endwhile
+                while targetexists
+                    target lasttarget
+                endwhile
+                settimer AllKillTimer 0
             endif
         else
             hotkey 'target closest non-friendly monster'
@@ -517,32 +463,17 @@ while not dead
                         settimer GlobalSongTimer 0
                     endif
                 endif
-                if tamer = 1
-                    if herder = 1 and timer HerdTimer >= HerdTimerCD
-                        while targetexists
-                            hotkey 'cancel current target'
-                        endwhile
-                        while not targetexists
-                            say '[focusaggression'
-                        endwhile
-                        while targetexists
-                            target lasttarget
-                        endwhile
-                        settimer HerdTimer 0
-                    else
-                        if timer AllKillTimer >= AllKillTimerCD
-                            while targetexists
-                                hotkey 'cancel current target'
-                            endwhile
-                            while not targetexists
-                                say 'all kill' 
-                            endwhile
-                            while targetexists
-                                target lasttarget
-                            endwhile
-                            settimer AllKillTimer 0
-                        endif
-                    endif
+                if timer AllKillTimer >= AllKillTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target lasttarget
+                    endwhile
+                    settimer AllKillTimer 0
                 endif
             else
             endif
