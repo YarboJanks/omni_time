@@ -13,6 +13,29 @@
 # - Add mage spell rotation
 # - Add Magery self buff and healing with scribe detection
 
+###################################################################
+#                                                                 #
+#                      Mage Configuration                         #
+#                                                                 #
+# Toggle on (1) or off (0) which spells you would like to be used.#
+#                                                                 #
+###################################################################
+@setvar! harm 1
+@setvar! fireball 0
+@setvar! lightning 1
+@setvar! magicarrow 1
+@setvar! flamestrike 1
+@setvar! createfood 1
+@setvar! bless 0
+@setvar! archprotection 0
+@setvar! curse 1
+@setvar! manavamp 1
+###################################################################
+#                 DO NOT EDIT BELOW THIS LINE                     #
+###################################################################
+
+
+
 @clearall
 
 if skill 'chivalry' > 1
@@ -49,6 +72,7 @@ endif
 @setvar! peace 0
 @setvar! provo 0
 @setvar! herdNecro 0
+@setvar! scribe 0
 
 if not timerexists preventVetSpam
     createtimer preventVetSpam
@@ -206,6 +230,11 @@ else
     wait 500
     overhead '[Alchemy Check]: Disabled' 38
 endif
+if skill 'inscription' > 1
+    wait 500
+    overhead '[Inscription Check]: Enabled' 169
+    @setvar! scribe 1
+endif
 
 if skill 'herding' > 1
     @setvar! herder 1
@@ -231,7 +260,7 @@ while not dead
             wait 600
             say '[wither'
             wait 600
-            cast 'fire elemental'
+            cast 'summon daemon'
             wait 3000
         endwhile
         while followers = 4 and followers < 5
@@ -248,7 +277,7 @@ while not dead
         if findtype 'a rift daemon' ground any any 1 as myTarget
             attack myTarget
             wait 50
-            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
                 while targetexists
                     hotkey 'cancel current target'
                 endwhile
@@ -264,7 +293,7 @@ while not dead
         elseif findtype 'a lesser rift daemon' ground any any 1 as myTarget
             attack myTarget
             wait 50
-            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
                 while targetexists
                     hotkey 'cancel current target'
                 endwhile
@@ -293,7 +322,7 @@ while not dead
             hotkey 'target closest non-friendly monster'
             attack lasttarget
             wait 50
-            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
                 getlabel lasttarget myLabel
                 if 'discord' in myLabel
                     //do nothing
@@ -311,7 +340,7 @@ while not dead
                     settimer GlobalSongTimer 0
                 endif
             endif
-            if peace = 1 and timer DiscordTimer >= DiscordTimerCD
+            if peace = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer PeaceTimer >= PeaceTimerCD
                 getlabel lasttarget myLabel
                 if 'break' in myLabel
                     //do nothing
