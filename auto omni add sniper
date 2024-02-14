@@ -1,6 +1,6 @@
 ###################################################################
 #                                                                 #
-#               Auto Omni v3.3 by [-_-]mindCrank                  #
+#               Auto Omni v3.1 by [-_-]mindCrank                  #
 #                                                                 #
 # What it does:                                                   #
 #   - Auto Targets and prioritizes adds/boss in order of priority #
@@ -12,29 +12,6 @@
 # To-do list:
 # - Add mage spell rotation
 # - Add Magery self buff and healing with scribe detection
-
-###################################################################
-#                                                                 #
-#                      Mage Configuration                         #
-#                                                                 #
-# Toggle on (1) or off (0) which spells you would like to be used.#
-#                                                                 #
-###################################################################
-@setvar! harm 1
-@setvar! fireball 0
-@setvar! lightning 1
-@setvar! magicarrow 1
-@setvar! flamestrike 1
-@setvar! createfood 1
-@setvar! bless 0
-@setvar! archprotection 0
-@setvar! curse 1
-@setvar! manavamp 1
-###################################################################
-#                 DO NOT EDIT BELOW THIS LINE                     #
-###################################################################
-
-
 
 @clearall
 
@@ -71,8 +48,6 @@ endif
 @setvar! discord 0
 @setvar! peace 0
 @setvar! provo 0
-@setvar! herdNecro 0
-@setvar! scribe 0
 
 if not timerexists preventVetSpam
     createtimer preventVetSpam
@@ -142,9 +117,9 @@ if skill 'musicianship' > 1
 endif
 if skill 'animal taming' > 1 and skill 'animal lore' > 1
     @setvar! tamer 1
-endif
-if skill 'spirit speak' > 1 and skill 'herding' > 1 and skill 'magery' > 1 and skill 'necromancy' > 1
-    @setvar! herdNecro 1
+    if skill 'herding' > 1
+        @setvar! herder 1
+    endif
 endif
 
 overhead '[Starting...] Auto Omni Add Sniper v3.0 by [-_-] mindCrank.' 184
@@ -169,8 +144,6 @@ elseif mage = 1 and tamer = 0 and bard = 0
     overhead '[Class Detected]: Pure Mage' 169
 elseif tamer = 1 and bard = 1
     overhead '[Class Detected]: Bard Tamer' 169
-elseif herdNecro = 1
-    overhead '[Class Detected]: Herd Necro' 169
 endif
 
 if melee = 1
@@ -182,7 +155,7 @@ if melee = 1
         overhead '[Chivalry Check]: Disabled' 38
     endif
 endif
-if tamer = 1 or herdNecro = 1
+if tamer = 1
     if skill 'herding' > 1
         wait 500
         overhead '[Herding Check]: Enabled' 169
@@ -230,54 +203,14 @@ else
     wait 500
     overhead '[Alchemy Check]: Disabled' 38
 endif
-if skill 'inscription' > 1
-    wait 500
-    overhead '[Inscription Check]: Enabled' 169
-    @setvar! scribe 1
-endif
-
-if skill 'herding' > 1
-    @setvar! herder 1
-    if findtype "shepherd's crook" backpack as crooky
-        getlabel crooky desc
-            if 'activated' in desc
-                overhead '[Herding]: Active' 88
-                overhead desc
-            else
-                dclick crooky
-            endif
-        else
-            overhead 'I need a Crook!!'
-    endif
-endif
 
 while not dead
-
-    # maintain Herd Necro summons
-    if herdNecro = 1
-        while followers < 4
-            say '[vengefulspirit'
-            wait 600
-            say '[wither'
-            wait 600
-            cast 'summon daemon'
-            wait 3000
-        endwhile
-        while followers = 4 and followers < 5
-            say '[vengefulspirit'
-            wait 600
-            say '[wither'
-            wait 600
-            cast 'summ. creature'
-            wait 3000
-        endwhile
-    endif
 
     if melee = 1 and tamer = 0
         if findtype 'a rift daemon' ground any any 1 as myTarget
             attack myTarget
             wait 50
-            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
                 while targetexists
                     hotkey 'cancel current target'
                 endwhile
@@ -293,7 +226,7 @@ while not dead
         elseif findtype 'a lesser rift daemon' ground any any 1 as myTarget
             attack myTarget
             wait 50
-            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
                 while targetexists
                     hotkey 'cancel current target'
                 endwhile
@@ -322,7 +255,7 @@ while not dead
             hotkey 'target closest non-friendly monster'
             attack lasttarget
             wait 50
-            if discord = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer DiscordTimer >= DiscordTimerCD
+            if discord = 1 and timer DiscordTimer >= DiscordTimerCD
                 getlabel lasttarget myLabel
                 if 'discord' in myLabel
                     //do nothing
@@ -340,7 +273,7 @@ while not dead
                     settimer GlobalSongTimer 0
                 endif
             endif
-            if peace = 1 and timer GlobalSongTimer >= GlobalSongTimerCD and timer PeaceTimer >= PeaceTimerCD
+            if peace = 1 and timer DiscordTimer >= DiscordTimerCD
                 getlabel lasttarget myLabel
                 if 'break' in myLabel
                     //do nothing
@@ -376,20 +309,27 @@ while not dead
                 settimer DiscordTimer 0
                 settimer GlobalSongTimer 0
             endif
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
-                    hotkey 'target closest non-friendly monster'
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
                     while targetexists
                         hotkey 'cancel current target'
                     endwhile
-                    say 'all kill' 
-                    while not targetexists harmful
-                        wait 50
+                    while not targetexists
+                        say '[focusaggression'
                     endwhile
-                    while targetexists harmful
-                        target lasttarget
+                    while targetexists
+                        target myTarget
                     endwhile
-                    settimer AllKillTimer 0
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
                 endif
             endif
         elseif findtype 'a lesser rift daemon' ground any any 12 as myTarget
@@ -408,65 +348,18 @@ while not dead
                 settimer DiscordTimer 0
                 settimer GlobalSongTimer 0
             endif
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
-                    hotkey 'target closest non-friendly monster'
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
                     while targetexists
                         hotkey 'cancel current target'
                     endwhile
-                    say 'all kill' 
-                    while not targetexists harmful
-                        wait 50
+                    while not targetexists
+                        say '[focusaggression'
                     endwhile
-                    while targetexists harmful
-                        target lasttarget
-                    endwhile
-                    settimer AllKillTimer 0
-                endif
-            endif
-        elseif findtype 'an astral projection' ground any any 12 as myTarget
-            attack myTarget
-            wait 50
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
-                    hotkey 'target closest non-friendly monster'
                     while targetexists
-                        hotkey 'cancel current target'
+                        target myTarget
                     endwhile
-                    say 'all kill' 
-                    while not targetexists harmful
-                        wait 50
-                    endwhile
-                    while targetexists harmful
-                        target lasttarget
-                    endwhile
-                    settimer AllKillTimer 0
-                endif
-            endif
-        elseif findtype 'a rift cultist' ground any any 12 as myTarget
-            attack myTarget
-            wait 50
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
-                    hotkey 'target closest non-friendly monster'
-                    while targetexists
-                        hotkey 'cancel current target'
-                    endwhile
-                    say 'all kill' 
-                    while not targetexists harmful
-                        wait 50
-                    endwhile
-                    while targetexists harmful
-                        target lasttarget
-                    endwhile
-                    settimer AllKillTimer 0
-                endif
-            endif
-        elseif findtype 'a rift warrior' ground any any 12 as myTarget
-            attack myTarget
-            wait 50
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
+                else
                     while targetexists
                         hotkey 'cancel current target'
                     endwhile
@@ -474,37 +367,120 @@ while not dead
                         say 'all kill' 
                     endwhile
                     while targetexists
-                        target lasttarget
+                        target myTarget
                     endwhile
-                    settimer AllKillTimer 0
+                endif
+            endif
+        elseif findtype 'an astral projection' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a rift cultist' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                endif
+            endif
+        elseif findtype 'a rift warrior' ground any any 12 as myTarget
+            attack myTarget
+            wait 50
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say '[focusaggression'
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
                 endif
             endif
         elseif findtype 'a rift footman' ground any any 12 as myTarget
             attack myTarget
             wait 50
-            if tamer = 1 or herdNecro = 1
-                if timer AllKillTimer >= AllKillTimerCD
-                    hotkey 'target closest non-friendly monster'
+            if tamer = 1
+                if herder = 1 and timer HerdTimer >= HerdTimerCD
                     while targetexists
                         hotkey 'cancel current target'
                     endwhile
-                    say 'all kill' 
-                    while not targetexists harmful
-                        wait 50
+                    while not targetexists
+                        say '[focusaggression'
                     endwhile
-                    while targetexists harmful
-                        target lasttarget
+                    while targetexists
+                        target myTarget
                     endwhile
-                    settimer AllKillTimer 0
+                else
+                    while targetexists
+                        hotkey 'cancel current target'
+                    endwhile
+                    while not targetexists
+                        say 'all kill' 
+                    endwhile
+                    while targetexists
+                        target myTarget
+                    endwhile
                 endif
             endif
         else
-            if lasttarget 
             hotkey 'target closest non-friendly monster'
             @setvar! currentTarget lasttarget
             getlabel currentTarget myLabel
             if find currentTarget
-                attack currentTarget
+                attack lasttarget
                 wait 50
                 if discord = 1 and timer DiscordTimer >= DiscordTimerCD
                     if 'discord' in myLabel
@@ -541,20 +517,31 @@ while not dead
                         settimer GlobalSongTimer 0
                     endif
                 endif
-                if tamer = 1 or herdNecro = 1
-                    if timer AllKillTimer >= AllKillTimerCD
-                        hotkey 'target closest non-friendly monster'
+                if tamer = 1
+                    if herder = 1 and timer HerdTimer >= HerdTimerCD
                         while targetexists
                             hotkey 'cancel current target'
                         endwhile
-                        say 'all kill' 
-                        while not targetexists harmful
-                            wait 50
+                        while not targetexists
+                            say '[focusaggression'
                         endwhile
-                        while targetexists harmful
+                        while targetexists
                             target lasttarget
                         endwhile
-                        settimer AllKillTimer 0
+                        settimer HerdTimer 0
+                    else
+                        if timer AllKillTimer >= AllKillTimerCD
+                            while targetexists
+                                hotkey 'cancel current target'
+                            endwhile
+                            while not targetexists
+                                say 'all kill' 
+                            endwhile
+                            while targetexists
+                                target lasttarget
+                            endwhile
+                            settimer AllKillTimer 0
+                        endif
                     endif
                 endif
             else
